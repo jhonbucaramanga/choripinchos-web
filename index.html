@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Choripinchos G&M | Menú y pedidos por WhatsApp</title>
+  <meta name="description" content="Choripinchos G&M - Catálogo, carrito de compras y pedidos rápidos por WhatsApp." />
+
+  <style>
+    :root {
+      --negro: #12100e;
+      --carbon: #1f1a16;
+      --rojo: #c62828;
+      --rojo-oscuro: #8f1616;
+      --amarillo: #f6b52e;
+      --mostaza: #d99016;
+      --crema: #fff4df;
+      --blanco: #ffffff;
+      --gris: #d8c8b1;
+      --sombra: 0 18px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: Arial, Helvetica, sans-serif; background: var(--negro); color: var(--crema); overflow-x: hidden; }
+    body.cart-open { overflow: hidden; }
+    img { max-width: 100%; display: block; }
+    a { color: inherit; text-decoration: none; }
+
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 50;
+      background: rgba(18, 16, 14, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .nav {
+      max-width: 1180px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      position: relative;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+
+    .brand-title {
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 1000;
+      color: var(--amarillo);
+      text-shadow:
+        0 0 10px rgba(246,181,46,0.65),
+        0 0 25px rgba(246,181,46,0.35),
+        0 4px 10px rgba(0,0,0,0.5);
+      letter-spacing: 2px;
+      animation: brandGlow 3s ease-in-out infinite alternate;
+    }
+
+    .brand-gm {
+      color: var(--blanco);
+      font-size: clamp(16px, 2vw, 22px);
+      font-weight: 900;
+      letter-spacing: 4px;
+      margin-top: 4px;
+      text-shadow: 0 0 12px rgba(255,255,255,0.28);
+    }
+
+    @keyframes brandGlow {
+      from {
+        text-shadow:
+          0 0 8px rgba(246,181,46,0.45),
+          0 0 18px rgba(246,181,46,0.25),
+          0 4px 10px rgba(0,0,0,0.5);
+      }
+      to {
+        text-shadow:
+          0 0 16px rgba(246,181,46,0.95),
+          0 0 32px rgba(246,181,46,0.55),
+          0 6px 18px rgba(0,0,0,0.65);
+      }
+    }
+
+    .brand img {
+      width: 58px;
+      height: 58px;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 2px solid var(--amarillo);
+      background: #2a170b;
+    }
+
+    .brand small {
+      display: block;
+      color: var(--amarillo);
+      font-size: 12px;
+      letter-spacing: 2px;
+    }
+
+    .nav-links { display: flex; align-items: center; gap: 20px; font-weight: 700; font-size: 14px; }
+    .nav-links a:hover { color: var(--amarillo); }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3); }
+    .btn-primary { background: linear-gradient(135deg, var(--rojo), var(--rojo-oscuro)); color: var(--blanco); }
+    .btn-yellow { background: linear-gradient(135deg, var(--amarillo), var(--mostaza)); color: #1a1109; }
+    .btn-outline { background: transparent; border: 2px solid var(--amarillo); color: var(--amarillo); }
+
+    .cart-btn { position: relative; }
+    .cart-count {
+      position: absolute;
+      top: -8px;
+      right: -6px;
+      background: var(--amarillo);
+      color: #1a1109;
+      width: 23px;
+      height: 23px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .menu-toggle {
+      display: none;
+      background: none;
+      color: var(--crema);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 22px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      min-height: 100vh;
+      padding: 130px 18px 70px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(198, 40, 40, 0.3), transparent 28%),
+        radial-gradient(circle at 80% 20%, rgba(246, 181, 46, 0.24), transparent 24%),
+        linear-gradient(rgba(18, 16, 14, 0.72), rgba(18, 16, 14, 0.86)),
+        url('fondo-parrilla.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.10), transparent 28%),
+        radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.08), transparent 30%);
+      opacity: 0.65;
+      animation: smokeMove 12s ease-in-out infinite alternate;
+      z-index: 0;
+    }
+
+    .hero-smoke {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .hero-smoke span {
+      position: absolute;
+      bottom: -180px;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.18), rgba(255,255,255,0.06) 42%, transparent 72%);
+      filter: blur(38px);
+      animation: smokeFloat 18s linear infinite;
+      opacity: 0.45;
+    }
+
+    .hero-smoke span:nth-child(1) { left: -8%; animation-duration: 16s; }
+    .hero-smoke span:nth-child(2) { left: 34%; animation-duration: 22s; animation-delay: 2s; }
+    .hero-smoke span:nth-child(3) { right: -10%; animation-duration: 19s; animation-delay: 5s; }
+
+    @keyframes smokeFloat {
+      0% { transform: translateY(0) translateX(0) scale(0.85); opacity: 0; }
+      18% { opacity: 0.45; }
+      55% { transform: translateY(-300px) translateX(35px) scale(1.08); opacity: 0.32; }
+      100% { transform: translateY(-640px) translateX(-20px) scale(1.28); opacity: 0; }
+    }
+
+    @keyframes smokeMove {
+      from { transform: translateX(-18px); }
+      to { transform: translateX(18px); }
+    }
+
+    .hero-wrap {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-wrap {
+      max-width: 1180px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(246, 181, 46, 0.13);
+      color: var(--amarillo);
+      border: 1px solid rgba(246, 181, 46, 0.35);
+      padding: 9px 14px;
+      border-radius: 999px;
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      font-size: clamp(42px, 7vw, 86px);
+      line-height: 0.94;
+      text-transform: uppercase;
+      letter-spacing: -2px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 span {
+      color: var(--amarillo);
+      text-shadow:
+        0 0 14px rgba(246,181,46,0.75),
+        0 0 30px rgba(246,181,46,0.45),
+        0 6px 0 rgba(0, 0, 0, 0.3);
+    }
+    .hero p { max-width: 620px; font-size: 19px; line-height: 1.6; color: #eadbc5; margin-bottom: 28px; }
+    .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+
+    .hero-card {
+      background: linear-gradient(160deg, rgba(255, 244, 223, 0.12), rgba(255, 255, 255, 0.03));
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 34px;
+      padding: 24px;
+      box-shadow: var(--sombra);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card img { width: 100%; border-radius: 26px; box-shadow: var(--sombra); background: #2a170b; }
+    .hero-price {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      background: var(--rojo);
+      color: #fff;
+      padding: 14px 18px;
+      border-radius: 18px;
+      font-weight: 900;
+      box-shadow: var(--sombra);
+      text-transform: uppercase;
+    }
+
+    section { padding: 78px 18px; }
+    .container { max-width: 1180px; margin: auto; }
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 32px; }
+    .section-head h2 { font-size: clamp(32px, 5vw, 54px); text-transform: uppercase; line-height: 1; }
+    .section-head h2 span { color: var(--amarillo); }
+    .section-head p { color: var(--gris); max-width: 520px; line-height: 1.5; }
+
+    .featured-photo {
+      background: #17120f;
+      padding-top: 0;
+    }
+
+    .featured-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 26px;
+      align-items: center;
+      background: linear-gradient(180deg, #251d18, #181310);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 30px;
+      padding: 26px;
+      box-shadow: var(--sombra);
+    }
+
+    .featured-box img {
+      width: 100%;
+      height: 360px;
+      object-fit: cover;
+      border-radius: 24px;
+      background: #2a170b;
+    }
+
+    .featured-box h2 {
+      font-size: clamp(30px, 5vw, 54px);
+      text-transform: uppercase;
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+
+    .featured-box h2 span { color: var(--amarillo); }
+    .featured-box p { color: var(--gris); line-height: 1.6; margin-bottom: 22px; }
+
+    .categories { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 28px; }
+    .cat-btn {
+      white-space: nowrap;
+      background: #241d18;
+      color: var(--crema);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .cat-btn.active, .cat-btn:hover { background: var(--amarillo); color: #1a1109; }
+
+    .products-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .product-card {
+      background: linear-gradient(180deg, #251d18, #181310);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 26px;
+      overflow: hidden;
+      box-shadow: 0 16px 38px rgba(0, 0, 0, 0.25);
+      transition: transform 0.25s ease, border 0.25s ease;
+    }
+    .product-card:hover { transform: translateY(-6px); border-color: rgba(246, 181, 46, 0.48); }
+    .product-img { height: 220px; background: linear-gradient(135deg, #4a2412, #130f0d); display: grid; place-items: center; overflow: hidden; }
+    .product-img img { width: 100%; height: 100%; object-fit: cover; }
+    .placeholder { font-size: 54px; filter: drop-shadow(0 12px 20px rgba(0,0,0,0.45)); }
+    .product-body { padding: 20px; }
+    .product-body h3 { font-size: 23px; margin-bottom: 8px; text-transform: uppercase; }
+    .product-body p { color: #d6c6af; line-height: 1.45; min-height: 60px; margin-bottom: 14px; }
+    .product-bottom { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .price { color: var(--amarillo); font-size: 24px; font-weight: 900; }
+    .small-btn { padding: 10px 13px; font-size: 13px; }
+
+    .promo {
+      background: linear-gradient(rgba(198, 40, 40, 0.88), rgba(75, 20, 12, 0.92)), url('fondo-madera.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+    .promo-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 34px;
+      padding: 38px;
+      box-shadow: var(--sombra);
+    }
+    .promo h2 { font-size: clamp(32px, 6vw, 66px); text-transform: uppercase; line-height: 0.95; margin-bottom: 16px; }
+    .promo h2 span { color: var(--amarillo); }
+    .promo p { font-size: 18px; line-height: 1.6; color: #ffe8c2; margin-bottom: 24px; }
+    .promo-card { background: var(--crema); color: #1a1109; border-radius: 28px; padding: 28px; transform: rotate(2deg); box-shadow: var(--sombra); }
+    .promo-card h3 { color: var(--rojo); font-size: 34px; text-transform: uppercase; margin-bottom: 8px; }
+
+    .features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .feature { background: #211a15; border: 1px solid rgba(255,255,255,0.1); border-radius: 22px; padding: 22px; text-align: center; }
+    .feature-icon { font-size: 34px; }
+    .feature strong { display: block; font-size: 18px; margin: 10px 0 6px; color: var(--amarillo); text-transform: uppercase; }
+    .feature p { color: #d4c3ab; line-height: 1.4; font-size: 14px; }
+
+    .location { background: #17120f; }
+    .location-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: stretch; }
+    .info-card, .map-card { background: #211a15; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 26px; padding: 28px; box-shadow: var(--sombra); }
+    .info-card h3 { font-size: 30px; margin-bottom: 14px; color: var(--amarillo); text-transform: uppercase; }
+    .info-list { list-style: none; display: grid; gap: 14px; margin: 18px 0 24px; color: #e8d8c1; line-height: 1.45; }
+    .map-placeholder {
+      min-height: 300px;
+      border-radius: 20px;
+      background: linear-gradient(rgba(18, 16, 14, 0.65), rgba(18, 16, 14, 0.65)), repeating-linear-gradient(45deg, #2a211b 0 12px, #1b1511 12px 24px);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 20px;
+      border: 1px solid rgba(246, 181, 46, 0.25);
+    }
+
+    footer { background: #0d0b0a; padding: 36px 18px; color: #cdbda7; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+    .footer-wrap { max-width: 1180px; margin: auto; display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; align-items: center; }
+    .socials { display: flex; gap: 12px; flex-wrap: wrap; }
+    .socials a { background: #211a15; border: 1px solid rgba(255,255,255,0.1); padding: 10px 14px; border-radius: 999px; font-weight: 900; }
+    .socials a:hover { background: var(--amarillo); color: #1a1109; }
+
+    .whatsapp-float {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 60;
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: #25d366;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 30px;
+      box-shadow: 0 16px 35px rgba(0, 0, 0, 0.38);
+    }
+
+    .cart-panel {
+      position: fixed;
+      top: 0;
+      right: -430px;
+      width: min(430px, 100%);
+      height: 100vh;
+      background: #15110f;
+      z-index: 100;
+      transition: right 0.28s ease;
+      box-shadow: -18px 0 50px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .cart-panel.open { right: 0; }
+    .cart-header { padding: 22px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255, 255, 255, 0.09); }
+    .cart-header h3 { font-size: 25px; text-transform: uppercase; color: var(--amarillo); }
+    .close-cart { background: transparent; color: var(--crema); border: 1px solid rgba(255, 255, 255, 0.2); width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; }
+    .cart-items { flex: 1; overflow-y: auto; padding: 18px; display: grid; align-content: start; gap: 14px; }
+    .cart-empty { color: #cdbda7; text-align: center; padding: 40px 18px; line-height: 1.5; }
+    .cart-item { background: #211a15; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 18px; padding: 14px; display: grid; gap: 10px; }
+    .cart-item-top { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+    .cart-item small { color: var(--amarillo); font-weight: 900; }
+    .qty-controls { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+    .qty-buttons { display: flex; align-items: center; gap: 8px; }
+    .qty-buttons button, .remove-btn { border: none; cursor: pointer; border-radius: 10px; background: #332820; color: var(--crema); min-width: 34px; height: 34px; font-weight: 900; }
+    .remove-btn { padding: 0 10px; color: #ffb0a8; }
+    .cart-footer { padding: 18px; border-top: 1px solid rgba(255, 255, 255, 0.09); background: #100d0b; display: grid; gap: 12px; }
+    .total-row { display: flex; justify-content: space-between; font-size: 22px; font-weight: 900; }
+    .customer-form { display: grid; gap: 10px; }
+    .customer-form input, .customer-form select, .customer-form textarea {
+      width: 100%;
+      background: #211a15;
+      color: var(--crema);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 12px 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    .customer-form textarea { resize: vertical; min-height: 74px; }
+    .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 90; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+    .overlay.show { opacity: 1; pointer-events: all; }
+
+    @media (max-width: 920px) {
+      .nav-links {
+        position: absolute;
+        top: 82px;
+        left: 18px;
+        right: 18px;
+        background: #17120f;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 20px;
+        padding: 18px;
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .nav-links.show { display: flex; }
+      .menu-toggle { display: inline-flex; }
+      .hero-wrap, .promo-box, .location-grid, .featured-box { grid-template-columns: 1fr; }
+      .products-grid { grid-template-columns: repeat(2, 1fr); }
+      .features { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 620px) {
+      .nav { padding: 10px 12px; }
+      .brand img { width: 48px; height: 48px; }
+      .brand span { font-size: 14px; }
+      .nav-actions .btn-primary { display: none; }
+      .hero { padding-top: 115px; }
+      .hero-actions, .section-head, .product-bottom, .footer-wrap { align-items: stretch; flex-direction: column; }
+      .products-grid, .features { grid-template-columns: 1fr; }
+      .promo-box, .featured-box { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <!--
+    ARCHIVOS DE IMAGEN:
+    1. Guarda el logo como: logo-choripinchos.png
+    2. Imagen destacada integrada desde Google Drive:
+       https://drive.google.com/uc?export=view&id=1fX7fV9BoxF2c9F5-NZP5Z9nC7BdE12BR
+       Si Drive bloquea la carga por permisos, descarga la imagen y guárdala como: foto-destacada.jpg
+    3. También puedes guardar fotos reales con estos nombres:
+       choripincho-clasico.jpg, choripincho-especial.jpg, picada-mixta.jpg,
+       salchipapa.jpg, hamburguesa.jpg, combo-familiar.jpg, fondo-parrilla.jpg, fondo-madera.jpg
+    4. WhatsApp actualizado: 322 3711034.
+    5. GOOGLE LINK RECOMENDADO: se usa https://www.google.com/search?q=CHORIPINCHOS, no el link largo con parámetros de sesión.
+  -->
+
+  <header class="topbar">
+    <nav class="nav">
+      <a class="brand" href="#inicio" aria-label="Inicio Choripinchos">
+        <img src="logo-choripinchos.png" alt="Logo Choripinchos G&M" onerror="this.src='https://dummyimage.com/300x300/7a3f19/fff4df&text=Choripinchos'" />
+        <div class="brand-text">
+          <span class="brand-title">CHORIPINCHOS</span>
+          <span class="brand-gm">G&M PARRILLA</span>
+        </div>
+      </a>
+
+      <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">☰</button>
+
+      <div class="nav-links" id="navLinks">
+        <a href="#menu">Menú</a>
+        <a href="#destacada">Imagen destacada</a>
+        <a href="#promos">Promos</a>
+        <a href="#experiencia">Experiencia</a>
+        <a href="#ubicacion">Ubicación</a>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn btn-outline cart-btn" id="openCartTop">🛒 Carrito <span class="cart-count" id="cartCount">0</span></button>
+        <a class="btn btn-primary" href="#menu">Pedir ahora</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="inicio">
+      <div class="hero-smoke" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="hero-wrap">
+        <div class="hero-copy">
+          <div class="badge">🔥 Parrilla • sabor urbano • combos</div>
+          <h1>El sabor que prende <span>la parrilla</span></h1>
+          <p>Choripinchos G&M trae comida rápida con espíritu de parrilla: choripinchos, picadas, salchipapas, combos y antojos para pedir rápido por WhatsApp.</p>
+          <div class="hero-actions">
+            <a href="#menu" class="btn btn-yellow">Ver menú</a>
+            <button class="btn btn-primary" type="button" onclick="openCart()">Finalizar pedido</button>
+            <a href="https://www.didi-food.com/es-MX/food/store/5764607563363255294/?channel=10&amp;cityId=57380100&amp;lat=4.579976&amp;lng=-74.098409&amp;ddlCode=e4dpwb&amp;area=CO&amp;lang=es-CO&amp;appKey=dlp&amp;redirectType=2&amp;params=" class="btn btn-yellow" target="_blank" rel="noopener">Pedir por DiDi Food</a>
+            <a href="#ubicacion" class="btn btn-outline">Cómo llegar</a>
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <img src="logo-choripinchos.png" alt="Choripinchos G&M" onerror="this.src='https://dummyimage.com/800x600/7a3f19/fff4df&text=Choripinchos+G%26M'" />
+          <div class="hero-price">Pedido rápido</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="featured-photo" id="destacada">
+      <div class="container">
+        <div class="featured-box">
+          <img src="https://drive.google.com/uc?export=view&id=1fX7fV9BoxF2c9F5-NZP5Z9nC7BdE12BR" alt="Producto destacado Choripinchos" onerror="this.src='foto-destacada.jpg'; this.onerror=function(){this.src='https://dummyimage.com/900x650/2a170b/fff4df&text=Imagen+destacada+Choripinchos';};" />
+          <div>
+            <h2>Producto <span>destacado</span></h2>
+            <p>Imagen destacada integrada desde Google Drive para mostrar un producto principal o pieza promocional de Choripinchos.</p>
+            <a href="#menu" class="btn btn-yellow">Ver menú</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="menu">
+      <div class="container">
+        <div class="section-head">
+          <div><h2>Menú <span>Choripinchos</span></h2></div>
+          <p>Catálogo con carrito. Agrega productos, revisa cantidades y envía el pedido directo por WhatsApp.</p>
+        </div>
+        <div class="categories" id="categories"></div>
+        <div class="products-grid" id="productsGrid"></div>
+      </div>
+    </section>
+
+    <section class="promo" id="promos">
+      <div class="container">
+        <div class="promo-box">
+          <div>
+            <h2>Promos para comer <span>bien brutal</span></h2>
+            <p>Activa promociones del día, combos familiares o descuentos por temporadas.</p>
+            <a href="#menu" class="btn btn-yellow">Ver productos</a>
+          </div>
+          <div class="promo-card">
+            <h3>Combo recomendado</h3>
+            <p><strong>Choripincho especial + bebida + adición.</strong></p>
+            <p>Ideal para destacar el producto más vendido de la semana.</p>
+            <button class="btn btn-primary" type="button" onclick="addProductById(2)">Agregar promo</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="experiencia">
+      <div class="container">
+        <div class="section-head">
+          <div><h2>Experiencia <span>G&M</span></h2></div>
+          <p>La idea es que la página se sienta como marca seria: rápida, visual, clara y lista para vender.</p>
+        </div>
+        <div class="features">
+          <div class="feature"><div class="feature-icon">🔥</div><strong>Parrilla</strong><p>Sabor callejero con estética fuerte y antojadora.</p></div>
+          <div class="feature"><div class="feature-icon">🛒</div><strong>Carrito</strong><p>Pedido organizado antes de enviarlo por WhatsApp.</p></div>
+          <div class="feature"><div class="feature-icon">📲</div><strong>WhatsApp</strong><p>Mensaje automático con productos, total y datos del cliente.</p></div>
+          <div class="feature"><div class="feature-icon">📍</div><strong>Ubicación</strong><p>Botones directos para llegar y contactar.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="location" id="ubicacion">
+      <div class="container">
+        <div class="section-head">
+          <div><h2>Ubicación y <span>contacto</span></h2></div>
+          <p>Actualiza aquí la dirección, horarios y enlaces oficiales del negocio.</p>
+        </div>
+        <div class="location-grid">
+          <div class="info-card">
+            <h3>Choripinchos G&M</h3>
+            <ul class="info-list">
+              <li><strong>Dirección:</strong> Cl. 19 Sur #12b-43, Antonio Nariño, Bogotá, Cundinamarca.</li>
+              <li><strong>Teléfono:</strong> 322 3711034.</li>
+              <li><strong>Horario:</strong> Lunes a domingo, horario por confirmar.</li>
+              <li><strong>Pedidos:</strong> WhatsApp directo con carrito o DiDi Food.</li>
+              <li><strong>Redes:</strong> Instagram, Facebook, TikTok y Google.</li>
+            </ul>
+            <div class="hero-actions">
+              <a class="btn btn-yellow" href="https://maps.app.goo.gl/k72WxFPPo8wsQomw9" target="_blank" rel="noopener">Abrir Maps</a>
+              <a class="btn btn-primary" href="https://wa.me/573223711034" target="_blank" rel="noopener">WhatsApp</a>
+              <a class="btn btn-outline" href="https://www.didi-food.com/es-MX/food/store/5764607563363255294/?channel=10&amp;cityId=57380100&amp;lat=4.579976&amp;lng=-74.098409&amp;ddlCode=e4dpwb&amp;area=CO&amp;lang=es-CO&amp;appKey=dlp&amp;redirectType=2&amp;params=" target="_blank" rel="noopener">DiDi Food</a>
+              <a class="btn btn-yellow" href="https://www.google.com/search?q=CHORIPINCHOS" target="_blank" rel="noopener">Google</a>
+            </div>
+          </div>
+          <div class="map-card">
+            <div class="map-placeholder">
+              <div>
+                <h3 style="color: var(--amarillo); text-transform: uppercase; margin-bottom: 10px;">Mapa del negocio</h3>
+                <p style="line-height: 1.5; color: #d8c8b1;">Cl. 19 Sur #12b-43, Antonio Nariño, Bogotá, Cundinamarca.</p><br />
+                <a class="btn btn-yellow" href="https://maps.app.goo.gl/k72WxFPPo8wsQomw9" target="_blank" rel="noopener">Abrir Google Maps</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-wrap">
+      <div><strong>Choripinchos G&M</strong><br /><span>Parrilla, sabor urbano y pedidos rápidos. Cl. 19 Sur #12b-43, Antonio Nariño, Bogotá. Tel: 322 3711034.</span></div>
+      <div class="socials">
+        <a href="https://www.instagram.com/choripinchos/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/Choripinchos_GM/" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://www.tiktok.com/@choripinchosgym" target="_blank" rel="noopener">TikTok</a>
+        <a href="https://www.didi-food.com/es-MX/food/store/5764607563363255294/?channel=10&amp;cityId=57380100&amp;lat=4.579976&amp;lng=-74.098409&amp;ddlCode=e4dpwb&amp;area=CO&amp;lang=es-CO&amp;appKey=dlp&amp;redirectType=2&amp;params=" target="_blank" rel="noopener">DiDi Food</a>
+        <a href="https://www.google.com/search?q=CHORIPINCHOS" target="_blank" rel="noopener">Google</a>
+      </div>
+    </div>
+  </footer>
+
+  <a class="whatsapp-float" id="whatsappFloat" href="#" aria-label="WhatsApp">☎</a>
+  <div class="overlay" id="overlay" onclick="closeCart()"></div>
+
+  <aside class="cart-panel" id="cartPanel" aria-label="Carrito de compras">
+    <div class="cart-header">
+      <h3>Tu pedido</h3>
+      <button class="close-cart" type="button" onclick="closeCart()">×</button>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-footer">
+      <div class="total-row"><span>Total</span><span id="cartTotal">$0</span></div>
+      <form class="customer-form" id="customerForm">
+        <input type="text" id="customerName" placeholder="Nombre" />
+        <input type="text" id="customerAddress" placeholder="Dirección o punto de recogida" />
+        <select id="paymentMethod">
+          <option value="Efectivo">Efectivo</option>
+          <option value="Nequi">Nequi</option>
+          <option value="Daviplata">Daviplata</option>
+          <option value="Transferencia">Transferencia</option>
+        </select>
+        <textarea id="customerNotes" placeholder="Notas del pedido: sin salsas, más papa, recoger en punto, etc."></textarea>
+      </form>
+      <button class="btn btn-yellow" type="button" onclick="sendWhatsAppOrder()">Enviar pedido por WhatsApp</button>
+      <button class="btn btn-outline" type="button" onclick="clearCart()">Vaciar carrito</button>
+    </div>
+  </aside>
+
+  <script>
+    'use strict';
+
+    const WHATSAPP_NUMBER = '573223711034';
+
+    const products = [
+      { id: 1, name: 'Chicharrones', category: 'Entradas', description: 'Chicharrón carnudo, patacón maduro, arepa paisa y tres láminas de chorizo.', price: 12000, image: 'chicharrones.jpg', emoji: '🔥' },
+      { id: 2, name: 'Chori Nachos', category: 'Entradas', description: 'Nachos, cuatro láminas de chorizo y salsas de la casa.', price: 9000, image: 'chori-nachos.jpg', emoji: '🌽' },
+      { id: 3, name: 'Chori Canasticas', category: 'Entradas', description: 'Dos canasticas de plátano, cebolla asada, mazorca tierna y chorizo ahumado.', price: 10000, image: 'chori-canasticas.jpg', emoji: '🥣' },
+
+      { id: 4, name: 'Chorizo Santarrosano', category: 'Chorizos', description: 'Acompañado con arepa paisa, mantequilla, sal y limón.', price: 5000, image: 'chorizo-santarrosano.jpg', emoji: '🌭' },
+      { id: 5, name: 'Chorizo de Cerdo Ahumado', category: 'Chorizos', description: 'Acompañado con arepa paisa, mantequilla, sal y limón.', price: 5000, image: 'chorizo-cerdo-ahumado.jpg', emoji: '🌭' },
+      { id: 6, name: 'Gratinado Santarrosano', category: 'Gratinados', description: 'Chorizo santarrosano con arepa paisa, queso, mantequilla, sal y limón.', price: 6000, image: 'gratinado-santarrosano.jpg', emoji: '🧀' },
+      { id: 7, name: 'Gratinado Cerdo Ahumado', category: 'Gratinados', description: 'Chorizo de cerdo ahumado con arepa paisa, queso, mantequilla, sal y limón.', price: 6000, image: 'gratinado-cerdo-ahumado.jpg', emoji: '🧀' },
+
+      { id: 8, name: 'Chori Pincho Pollo', category: 'Chori Pinchos', description: 'Chorizo de cerdo ahumado y pechuga de pollo. Acompañado con arepa paisa, mantequilla, sal y limón.', price: 8000, image: 'chori-pincho-pollo.jpg', emoji: '🍢' },
+      { id: 9, name: 'Chori Pincho Trifásico', category: 'Chori Pinchos', description: 'Chorizo de cerdo ahumado, carne de res, carne de cerdo y pechuga de pollo.', price: 8000, image: 'chori-pincho-trifasico.jpg', emoji: '🍢' },
+
+      { id: 10, name: 'Arepa Paisa con Mantequilla y Sal', category: 'Chori Arepas', description: 'Arepa paisa tradicional con mantequilla y sal.', price: 1000, image: 'arepa-paisa-mantequilla-sal.jpg', emoji: '🫓' },
+      { id: 11, name: 'Arepa con Jamón y Queso', category: 'Chori Arepas', description: 'Arepa paisa rellena con jamón y queso.', price: 3500, image: 'arepa-jamon-queso.jpg', emoji: '🫓' },
+      { id: 12, name: 'Arepa Repleta de Queso', category: 'Chori Arepas', description: 'Arepa paisa rellena con abundante queso.', price: 5000, image: 'arepa-repleta-queso.jpg', emoji: '🧀' },
+
+      { id: 13, name: 'Arepa Rellena Mazorca', category: 'Arepas Rellenas', description: 'Mazorca tierna sofreída, huevo revuelto, chorizo ahumado, arepa paisa, jamón y queso.', price: 12000, image: 'arepa-rellena-mazorca.jpg', emoji: '🌽' },
+      { id: 14, name: 'Arepa Rellena Chicharrón', category: 'Arepas Rellenas', description: 'Chicharrón carnudo, patacón maduro, chorizo ahumado, arepa paisa, jamón y queso.', price: 15000, image: 'arepa-rellena-chicharron.jpg', emoji: '🥓' },
+      { id: 15, name: 'Arepa Rellena Carne', category: 'Arepas Rellenas', description: 'Carne de res, cebolla asada, arepa paisa, chorizo ahumado, jamón, queso y salsas.', price: 16000, image: 'arepa-rellena-carne.jpg', emoji: '🥩' },
+      { id: 16, name: 'Arepa Rellena Pollo', category: 'Arepas Rellenas', description: 'Pechuga de pollo, cebolla asada, arepa paisa, chorizo ahumado, jamón, queso y salsas.', price: 16000, image: 'arepa-rellena-pollo.jpg', emoji: '🍗' },
+      { id: 17, name: 'Arepa Rellena Mixta', category: 'Arepas Rellenas', description: 'Carne de res, cebolla asada, chorizo ahumado, pechuga de pollo, jamón, queso y arepa paisa.', price: 17000, image: 'arepa-rellena-mixta.jpg', emoji: '🥩' },
+      { id: 18, name: 'Arepa Rellena Criolla', category: 'Arepas Rellenas', description: 'Carne de res, mazorca tierna, cebolla asada, chorizo ahumado, pollo, jamón, queso, tocineta y arepa paisa.', price: 20000, image: 'arepa-rellena-criolla.jpg', emoji: '🔥' },
+
+      { id: 19, name: 'Chori Papa Sencilla', category: 'Chori Papas', description: 'Chorizo de cerdo ahumado y papas a la francesa.', price: 10000, image: 'chori-papa-sencilla.jpg', emoji: '🍟' },
+      { id: 20, name: 'Chori Papa Gratinada', category: 'Chori Papas', description: 'Chorizo de cerdo ahumado, papas a la francesa y queso.', price: 12000, image: 'chori-papa-gratinada.jpg', emoji: '🧀' },
+      { id: 21, name: 'Chori Papa Criolla', category: 'Chori Papas', description: 'Dos chorizos santarrosanos, papa criolla y arepa paisa.', price: 16000, image: 'chori-papa-criolla.jpg', emoji: '🥔' },
+      { id: 22, name: 'Chori Papa Jumbo Completa', category: 'Chori Papas', description: 'Para 4 personas. Chorizos, salchichas, carne, pollo, papa francesa, mazorca, tocineta, queso mozzarella, lechuga, papa chip y salsas.', price: 65000, image: 'chori-papa-jumbo-completa.jpg', emoji: '🍟' },
+      { id: 23, name: 'Chori Papa Jumbo Media', category: 'Chori Papas', description: 'Media porción de la Chori Papa Jumbo.', price: 42000, image: 'chori-papa-jumbo-media.jpg', emoji: '🍟' },
+
+      { id: 24, name: 'Chori Taco Ranchero Solo', category: 'Chori Tacos', description: 'Tortilla de harina, carne de res, pechuga de pollo, chorizo de cerdo, tocineta, queso, mazorca tierna, cebolla asada y salsas.', price: 26000, image: 'chori-taco-ranchero-solo.jpg', emoji: '🌮' },
+      { id: 25, name: 'Chori Taco Ranchero Combo', category: 'Chori Tacos', description: 'Chori taco ranchero con papas y bebida 400 ml.', price: 32000, image: 'chori-taco-ranchero-combo.jpg', emoji: '🌮' },
+      { id: 26, name: 'Chori Taco Criollo Solo', category: 'Chori Tacos', description: 'Tortilla de harina, trocitos de carne y pollo, chorizo de cerdo, jamón, queso, mazorca tierna, cebolla asada, papa chip y salsas.', price: 21000, image: 'chori-taco-criollo-solo.jpg', emoji: '🌮' },
+      { id: 27, name: 'Chori Taco Criollo Combo', category: 'Chori Tacos', description: 'Chori taco criollo con papas y bebida 400 ml.', price: 28000, image: 'chori-taco-criollo-combo.jpg', emoji: '🌮' },
+
+      { id: 28, name: 'Chori Patacón Criollo', category: 'Chori Patacones', description: 'Patacón maduro, trocitos de carne y pollo, chorizo de cerdo, queso, mazorca tierna, cebolla asada y tocineta.', price: 23000, image: 'chori-patacon-criollo.jpg', emoji: '🍌' },
+      { id: 29, name: 'Chori Patacón Ranchero', category: 'Chori Patacones', description: 'Patacón maduro, carne de res y pechuga de pollo en julianas, chorizo de cerdo, tocineta, queso y mazorca tierna.', price: 31000, image: 'chori-patacon-ranchero.jpg', emoji: '🍌' },
+      { id: 30, name: 'Chori Patacón Relleno', category: 'Chori Patacones', description: 'Hasta para dos personas. Dos patacones maduros, pollo, carne de res, chorizo, tocineta, lechuga, jamón, cebolla asada, tomate y queso.', price: 43000, image: 'chori-patacon-relleno.jpg', emoji: '🍌' },
+
+      { id: 31, name: 'Costillitas', category: 'Alitas y Costillas', description: 'Costillas de cerdo ahumadas, papas a la francesa, chorizo de cerdo ahumado y arepa paisa.', price: 19000, image: 'costillitas.jpg', emoji: '🍖' },
+      { id: 32, name: 'Alitas x5', category: 'Alitas y Costillas', description: 'Alitas con papas a la francesa y chorizo de cerdo ahumado. Sabores: natural, BBQ, miel mostaza.', price: 13000, image: 'alitas-x5.jpg', emoji: '🍗' },
+      { id: 33, name: 'Alitas x10', category: 'Alitas y Costillas', description: 'Alitas con papas a la francesa y chorizo de cerdo ahumado. Sabores: natural, BBQ, miel mostaza.', price: 20000, image: 'alitas-x10.jpg', emoji: '🍗' },
+      { id: 34, name: 'Alitas x15', category: 'Alitas y Costillas', description: 'Alitas con papas a la francesa y chorizo de cerdo ahumado. Sabores: natural, BBQ, miel mostaza.', price: 25000, image: 'alitas-x15.jpg', emoji: '🍗' },
+      { id: 35, name: 'Costialitas', category: 'Alitas y Costillas', description: 'Costillas de cerdo ahumadas, alitas, papas a la francesa, tocineta, chorizo ahumado y arepa paisa.', price: 25000, image: 'costialitas.jpg', emoji: '🍖' },
+
+      { id: 36, name: 'Cajita Feliz Vaqueritos', category: 'Infantil', description: 'Nuggets de pollo, papas a la francesa, salchicha americana, juguete sorpresa, chocolatina Jet, mochila y jugo Hit en caja.', price: 28000, image: 'cajita-feliz-vaqueritos.jpg', emoji: '🤠' },
+      { id: 37, name: 'Nuggets', category: 'Varios', description: 'Cinco nuggets de pollo, papas a la francesa y cinco láminas de chorizo.', price: 14000, image: 'nuggets.jpg', emoji: '🍗' },
+      { id: 38, name: 'Fajitas', category: 'Varios', description: 'Carne de res, carne de cerdo, pechuga de pollo, pimentón asado, cebolla asada, cilantro y tortillas de harina.', price: 21000, image: 'fajitas.jpg', emoji: '🌯' },
+      { id: 39, name: 'Mazorcada', category: 'Varios', description: 'Carne de res, pechuga de pollo, mazorca tierna sofreída, chorizo ahumado, queso, papa chip y salsas.', price: 19000, image: 'mazorcada.jpg', emoji: '🌽' },
+
+      { id: 40, name: 'Chori Perro Cuatrero Solo', category: 'Chori Perros', description: 'Chorizo de cerdo ahumado, cebolla asada, queso mozzarella, papa chip y salsas.', price: 13000, image: 'chori-perro-cuatrero-solo.jpg', emoji: '🌭' },
+      { id: 41, name: 'Chori Perro Cuatrero Combo', category: 'Chori Perros', description: 'Chori perro cuatrero con papas y bebida 250 ml.', price: 19000, image: 'chori-perro-cuatrero-combo.jpg', emoji: '🌭' },
+      { id: 42, name: 'Chori Perro Bandido Solo', category: 'Chori Perros', description: 'Chori perro criollo con cebolla asada y queso mozzarella.', price: 15000, image: 'chori-perro-bandido-solo.jpg', emoji: '🌭' },
+      { id: 43, name: 'Chori Perro Bandido Combo', category: 'Chori Perros', description: 'Chori perro bandido con papas y bebida 400 ml.', price: 21000, image: 'chori-perro-bandido-combo.jpg', emoji: '🌭' },
+      { id: 44, name: 'Chori Perro Alguacil Solo', category: 'Chori Perros', description: 'Tocineta, queso mozzarella, papa chip, pechuga de pollo, carne de res, cebolla asada, huevo frito, chorizo de cerdo, tomate y lechuga.', price: 23000, image: 'chori-perro-alguacil-solo.jpg', emoji: '🌭' },
+      { id: 45, name: 'Chori Perro Alguacil Combo', category: 'Chori Perros', description: 'Chori perro alguacil ranchero con papas y bebida 400 ml.', price: 29000, image: 'chori-perro-alguacil-combo.jpg', emoji: '🌭' },
+
+      { id: 46, name: 'Chori Combo', category: 'Combos', description: 'Una hamburguesa sencilla, un perro sencillo, una porción de papas a la francesa y dos gaseosas pequeñas.', price: 39000, image: 'chori-combo.jpg', emoji: '🍔' },
+
+      { id: 47, name: 'Chori Hamburguesa en Patacón Sola', category: 'Chori Hamburguesas', description: 'Chori hamburguesa en patacón.', price: 21000, image: 'chori-hamburguesa-patacon-sola.jpg', emoji: '🍔' },
+      { id: 48, name: 'Chori Hamburguesa en Patacón Combo', category: 'Chori Hamburguesas', description: 'Chori hamburguesa en patacón con papas y bebida 400 ml.', price: 29000, image: 'chori-hamburguesa-patacon-combo.jpg', emoji: '🍔' },
+      { id: 49, name: 'Chori Hamburguesa en Arepa Sola', category: 'Chori Hamburguesas', description: 'Chori hamburguesa en arepa.', price: 20000, image: 'chori-hamburguesa-arepa-sola.jpg', emoji: '🍔' },
+      { id: 50, name: 'Chori Hamburguesa en Arepa Combo', category: 'Chori Hamburguesas', description: 'Chori hamburguesa en arepa con papas y bebida 250 ml.', price: 28000, image: 'chori-hamburguesa-arepa-combo.jpg', emoji: '🍔' },
+      { id: 51, name: 'Chori Hamburguesa Gratinada Sola', category: 'Chori Hamburguesas', description: 'Chori hamburguesa gratinada.', price: 22000, image: 'chori-hamburguesa-gratinada-sola.jpg', emoji: '🍔' },
+      { id: 52, name: 'Chori Hamburguesa Gratinada Combo', category: 'Chori Hamburguesas', description: 'Chori hamburguesa gratinada con papas y bebida 250 ml.', price: 28000, image: 'chori-hamburguesa-gratinada-combo.jpg', emoji: '🍔' },
+      { id: 53, name: 'Chori Hamburguesa de Paso Texana', category: 'Chori Hamburguesas', description: 'Hamburguesa texana de paso.', price: 11000, image: 'chori-hamburguesa-texana-de-paso.jpg', emoji: '🍔' },
+      { id: 54, name: 'Combo Dos Hamburguesas Texanas', category: 'Chori Hamburguesas', description: 'Combo de dos hamburguesas texanas.', price: 20000, image: 'combo-dos-hamburguesas-texanas.jpg', emoji: '🍔' },
+      { id: 55, name: 'Chori Hamburguesa Vaquera Sola', category: 'Chori Hamburguesas', description: 'Chori hamburguesa vaquera sencilla.', price: 19000, image: 'chori-hamburguesa-vaquera-sola.jpg', emoji: '🍔' },
+      { id: 56, name: 'Chori Hamburguesa Vaquera Combo', category: 'Chori Hamburguesas', description: 'Chori hamburguesa vaquera con papas y bebida 250 ml.', price: 26000, image: 'chori-hamburguesa-vaquera-combo.jpg', emoji: '🍔' },
+      { id: 57, name: 'Chori Hamburguesa Sheriff Criolla Sola', category: 'Chori Hamburguesas', description: 'Chori hamburguesa sheriff criolla.', price: 21000, image: 'chori-hamburguesa-sheriff-criolla-sola.jpg', emoji: '🍔' },
+      { id: 58, name: 'Chori Hamburguesa Sheriff Criolla Combo', category: 'Chori Hamburguesas', description: 'Chori hamburguesa sheriff criolla con papas y bebida 400 ml.', price: 28000, image: 'chori-hamburguesa-sheriff-criolla-combo.jpg', emoji: '🍔' },
+      { id: 59, name: 'Chori Hamburguesa Forajida Ranchera Sola', category: 'Chori Hamburguesas', description: 'Chori hamburguesa forajida ranchera.', price: 22000, image: 'chori-hamburguesa-forajida-ranchera-sola.jpg', emoji: '🍔' },
+      { id: 60, name: 'Chori Hamburguesa Forajida Ranchera Combo', category: 'Chori Hamburguesas', description: 'Chori hamburguesa forajida ranchera con papas y bebida 400 ml.', price: 29000, image: 'chori-hamburguesa-forajida-ranchera-combo.jpg', emoji: '🍔' },
+      { id: 61, name: 'Chori Hamburguesa Forastera Trifásica Sola', category: 'Chori Hamburguesas', description: 'Chori hamburguesa forastera trifásica.', price: 25000, image: 'chori-hamburguesa-forastera-trifasica-sola.jpg', emoji: '🍔' },
+      { id: 62, name: 'Chori Hamburguesa Forastera Trifásica Combo', category: 'Chori Hamburguesas', description: 'Chori hamburguesa forastera trifásica con papas y bebida 400 ml.', price: 31000, image: 'chori-hamburguesa-forastera-trifasica-combo.jpg', emoji: '🍔' },
+      { id: 63, name: 'Chori Hamburguesa Nativa Hawaiana Sola', category: 'Chori Hamburguesas', description: 'Chori hamburguesa hawaiana.', price: 22000, image: 'chori-hamburguesa-nativa-hawaiana-sola.jpg', emoji: '🍔' },
+      { id: 64, name: 'Chori Hamburguesa Nativa Hawaiana Combo', category: 'Chori Hamburguesas', description: 'Chori hamburguesa hawaiana con papas y bebida 400 ml.', price: 29000, image: 'chori-hamburguesa-nativa-hawaiana-combo.jpg', emoji: '🍔' },
+      { id: 65, name: 'Chori Hamburguesa Bill Macabro Sola', category: 'Chori Hamburguesas', description: 'Chori hamburguesa Bill Macabro.', price: 26000, image: 'chori-hamburguesa-bill-macabro-sola.jpg', emoji: '🍔' },
+      { id: 66, name: 'Chori Hamburguesa Bill Macabro Combo', category: 'Chori Hamburguesas', description: 'Chori hamburguesa Bill Macabro con papas y bebida 400 ml.', price: 32000, image: 'chori-hamburguesa-bill-macabro-combo.jpg', emoji: '🍔' },
+
+      { id: 67, name: 'Plato Res', category: 'Platos', description: 'Porción de carne de res con tres láminas de chorizo ahumado, ensalada, papa salada, patacón, arroz o arepa y té preparado.', price: 18000, image: 'plato-res.jpg', emoji: '🍽️' },
+      { id: 68, name: 'Plato Pollo', category: 'Platos', description: 'Porción de pollo con tres láminas de chorizo ahumado, ensalada, papa salada, patacón, arroz o arepa y té preparado.', price: 18000, image: 'plato-pollo.jpg', emoji: '🍽️' },
+      { id: 69, name: 'Plato Cerdo', category: 'Platos', description: 'Porción de cerdo con tres láminas de chorizo ahumado, ensalada, papa salada, patacón, arroz o arepa y té preparado.', price: 18000, image: 'plato-cerdo.jpg', emoji: '🍽️' },
+      { id: 70, name: 'Plato Trifásico', category: 'Platos', description: 'Carne de res, carne de cerdo, pechuga de pollo, arroz, papa salada, patacón, arepa paisa, chorizo santarrosano, té preparado y ensalada.', price: 42000, image: 'plato-trifasico.jpg', emoji: '🍽️' },
+      { id: 71, name: 'Pechuga Media', category: 'Platos', description: 'Media pechuga con papas a la francesa, arepa paisa, tocineta, ensalada y chorizo de cerdo ahumado.', price: 35000, image: 'pechuga-media.jpg', emoji: '🍗' },
+      { id: 72, name: 'Pechuga Completa', category: 'Platos', description: 'Pechuga completa con papas a la francesa, arepa paisa, tocineta, ensalada y chorizo de cerdo ahumado.', price: 48000, image: 'pechuga-completa.jpg', emoji: '🍗' },
+      { id: 73, name: 'Churrasco Medio', category: 'Platos', description: 'Una porción de churrasco con papas a la francesa, arepa paisa, tocineta, ensalada y chorizo de cerdo ahumado.', price: 35000, image: 'churrasco-medio.jpg', emoji: '🥩' },
+      { id: 74, name: 'Churrasco Completo', category: 'Platos', description: 'Dos porciones de churrasco con papas a la francesa, arepa paisa, tocineta, ensalada y chorizo de cerdo ahumado.', price: 48000, image: 'churrasco-completo.jpg', emoji: '🥩' },
+      { id: 75, name: 'Pechuga Gratinada', category: 'Platos', description: 'Media pechuga gratinada con papas a la francesa, arepa paisa, tocineta, ensalada, chorizo ahumado y queso.', price: 37000, image: 'pechuga-gratinada.jpg', emoji: '🧀' },
+      { id: 76, name: 'Rollo de Cerdo Hawaiano', category: 'Platos', description: 'Lomo de cerdo con jamón, queso, tocineta, chorizo ahumado, piña dulce, papas a la francesa y ensalada.', price: 35000, image: 'rollo-cerdo-hawaiano.jpg', emoji: '🍍' },
+      { id: 77, name: 'Chuleta de Cerdo', category: 'Platos', description: 'Chuleta de cerdo con un chorizo santarrosano, papa criolla, arepa paisa y ensalada.', price: 38000, image: 'chuleta-cerdo.jpg', emoji: '🍖' },
+      { id: 78, name: 'Picada Mixta', category: 'Picadas', description: 'Dos arepas paisas, dos arepas de queso, chorizos ahumados, chorizos santarrosanos, pechuga, carne de res, papas a la francesa y tocineta.', price: 65000, image: 'picada-mixta.jpg', emoji: '🥩' },
+      { id: 79, name: 'Picada Especial', category: 'Picadas', description: 'Picada con arepas, chorizos, costilla ahumada, papa criolla, patacones, pechuga, carne de res, papas a la francesa y tocineta.', price: 75000, image: 'picada-especial.jpg', emoji: '🥩' },
+
+      { id: 80, name: 'Jugo Natural en Agua', category: 'Jugos', description: 'Sabores: guanábana, lulo, mango, fresa, mora y maracuyá.', price: 8000, image: 'jugo-natural-agua.jpg', emoji: '🥤' },
+      { id: 81, name: 'Jugo Natural en Leche', category: 'Jugos', description: 'Sabores: guanábana, lulo, mango, fresa, mora y maracuyá.', price: 9000, image: 'jugo-natural-leche.jpg', emoji: '🥤' },
+      { id: 82, name: 'Limonada', category: 'Jugos', description: 'Limonada natural.', price: 7000, image: 'limonada.jpg', emoji: '🍋' },
+      { id: 83, name: 'Limonada de Coco', category: 'Jugos', description: 'Limonada de coco.', price: 10000, image: 'limonada-coco.jpg', emoji: '🥥' },
+      { id: 84, name: 'Cerezada', category: 'Jugos', description: 'Bebida cerezada.', price: 8500, image: 'cerezada.jpg', emoji: '🍒' },
+
+      { id: 85, name: 'Corona', category: 'Cervezas', description: 'Cerveza Corona.', price: 8000, image: 'cerveza-corona.jpg', emoji: '🍺' },
+      { id: 86, name: 'Stella Artois', category: 'Cervezas', description: 'Cerveza Stella Artois.', price: 8000, image: 'cerveza-stella-artois.jpg', emoji: '🍺' },
+      { id: 87, name: 'Coronita Extra', category: 'Cervezas', description: 'Cerveza Coronita Extra.', price: 7000, image: 'cerveza-coronita-extra.jpg', emoji: '🍺' },
+      { id: 88, name: 'Cola y Pola', category: 'Cervezas', description: 'Cola y Pola 330 cm³.', price: 5500, image: 'cola-y-pola.jpg', emoji: '🍺' },
+      { id: 89, name: 'Budweiser', category: 'Cervezas', description: 'Cerveza Budweiser.', price: 5500, image: 'cerveza-budweiser.jpg', emoji: '🍺' },
+      { id: 90, name: 'Poker', category: 'Cervezas', description: 'Cerveza Poker.', price: 5500, image: 'cerveza-poker.jpg', emoji: '🍺' },
+      { id: 91, name: 'Club Colombia Dorada', category: 'Cervezas', description: 'Cerveza Club Colombia Dorada.', price: 6000, image: 'club-colombia-dorada.jpg', emoji: '🍺' },
+      { id: 92, name: 'Club Colombia Negra', category: 'Cervezas', description: 'Cerveza Club Colombia Negra.', price: 6000, image: 'club-colombia-negra.jpg', emoji: '🍺' },
+      { id: 93, name: 'Club Colombia Roja', category: 'Cervezas', description: 'Cerveza Club Colombia Roja.', price: 6000, image: 'club-colombia-roja.jpg', emoji: '🍺' },
+      { id: 94, name: 'Águila Light', category: 'Cervezas', description: 'Cerveza Águila Light.', price: 5500, image: 'aguila-light.jpg', emoji: '🍺' },
+      { id: 95, name: 'Águila Original', category: 'Cervezas', description: 'Cerveza Águila Original.', price: 5500, image: 'aguila-original.jpg', emoji: '🍺' },
+
+      { id: 96, name: 'Soda Sabor con Licor', category: 'Sodas', description: 'Perlas de sabores, sirope de sabores, soda y banderita de dulce. Sabores: lulo, mandarina, sandía, manzana verde, maracuyá y lychee.', price: 11000, image: 'soda-sabor-con-licor.jpg', emoji: '🍹' },
+      { id: 97, name: 'Soda Sabor sin Licor', category: 'Sodas', description: 'Perlas de sabores, sirope de sabores, soda y banderita de dulce. Sabores: lulo, mandarina, sandía, manzana verde, maracuyá y lychee.', price: 9000, image: 'soda-sabor-sin-licor.jpg', emoji: '🍹' },
+
+      { id: 98, name: 'Coca Cola 1.75 L', category: 'Gaseosas', description: 'Gaseosa Coca Cola 1.75 litros.', price: 8000, image: 'coca-cola-175.jpg', emoji: '🥤' },
+      { id: 99, name: 'Quatro 1.75 L', category: 'Gaseosas', description: 'Gaseosa Quatro 1.75 litros.', price: 7000, image: 'quatro-175.jpg', emoji: '🥤' },
+      { id: 100, name: 'Coca Cola 400 ml', category: 'Gaseosas', description: 'Gaseosa Coca Cola 400 ml.', price: 3500, image: 'coca-cola-400.jpg', emoji: '🥤' },
+      { id: 101, name: 'Ginger 400 ml', category: 'Gaseosas', description: 'Ginger 400 ml.', price: 3500, image: 'ginger-400.jpg', emoji: '🥤' },
+      { id: 102, name: 'Quatro 400 ml', category: 'Gaseosas', description: 'Gaseosa Quatro 400 ml.', price: 3500, image: 'quatro-400.jpg', emoji: '🥤' },
+      { id: 103, name: 'Pony Malta', category: 'Gaseosas', description: 'Pony Malta.', price: 3500, image: 'pony-malta.jpg', emoji: '🥤' },
+      { id: 104, name: 'Botella de Agua 600 ml', category: 'Gaseosas', description: 'Botella de agua 600 ml.', price: 2500, image: 'botella-agua-600.jpg', emoji: '💧' },
+      { id: 105, name: 'Agua con Gas 600 ml', category: 'Gaseosas', description: 'Agua con gas 600 ml.', price: 2500, image: 'agua-gas-600.jpg', emoji: '💧' },
+      { id: 106, name: 'Mr Tea 500 ml', category: 'Gaseosas', description: 'Mr Tea 500 ml.', price: 3500, image: 'mr-tea-500.jpg', emoji: '🧊' },
+      { id: 107, name: 'FuzeTea 400 ml', category: 'Gaseosas', description: 'FuzeTea 400 ml.', price: 3500, image: 'fuzetea-400.jpg', emoji: '🧊' },
+      { id: 108, name: 'Jugo Hit 500 ml', category: 'Gaseosas', description: 'Jugo Hit 500 ml.', price: 3500, image: 'jugo-hit-500.jpg', emoji: '🥤' },
+      { id: 109, name: 'Jugo Hit Caja 200 ml', category: 'Gaseosas', description: 'Jugo Hit en caja 200 ml.', price: 2000, image: 'jugo-hit-caja-200.jpg', emoji: '🥤' },
+      { id: 110, name: 'Agua Brisa 280 ml', category: 'Gaseosas', description: 'Agua Brisa 280 ml.', price: 2000, image: 'agua-brisa-280.jpg', emoji: '💧' },
+      { id: 111, name: 'Agua Brisa Limón 280 ml', category: 'Gaseosas', description: 'Agua Brisa limón 280 ml.', price: 2000, image: 'agua-brisa-limon-280.jpg', emoji: '💧' },
+      { id: 112, name: 'Agua Brisa Manzana 280 ml', category: 'Gaseosas', description: 'Agua Brisa manzana 280 ml.', price: 2000, image: 'agua-brisa-manzana-280.jpg', emoji: '💧' },
+      { id: 113, name: 'Agua Brisa Maracuyá 280 ml', category: 'Gaseosas', description: 'Agua Brisa maracuyá 280 ml.', price: 2000, image: 'agua-brisa-maracuya-280.jpg', emoji: '💧' },
+      { id: 114, name: 'Coca Cola Mini', category: 'Gaseosas', description: 'Coca Cola mini.', price: 2500, image: 'coca-cola-mini.jpg', emoji: '🥤' },
+
+      { id: 115, name: 'Porción de Arroz', category: 'Porciones', description: 'Porción adicional de arroz.', price: 3500, image: 'porcion-arroz.jpg', emoji: '🍚' },
+      { id: 116, name: 'Porción de Alas', category: 'Porciones', description: 'Porción adicional de alas.', price: 8000, image: 'porcion-alas.jpg', emoji: '🍗' },
+      { id: 117, name: 'Porción de Costillas', category: 'Porciones', description: 'Porción adicional de costillas.', price: 10000, image: 'porcion-costillas.jpg', emoji: '🍖' },
+      { id: 118, name: 'Porción de Ensalada', category: 'Porciones', description: 'Porción adicional de ensalada.', price: 5000, image: 'porcion-ensalada.jpg', emoji: '🥗' },
+      { id: 119, name: 'Porción de Nuggets', category: 'Porciones', description: 'Porción adicional de nuggets.', price: 6000, image: 'porcion-nuggets.jpg', emoji: '🍗' },
+      { id: 120, name: 'Porción de Papa Francesa', category: 'Porciones', description: 'Porción adicional de papa francesa.', price: 5000, image: 'porcion-papa-francesa.jpg', emoji: '🍟' },
+      { id: 121, name: 'Porción de Papa Criolla', category: 'Porciones', description: 'Porción adicional de papa criolla.', price: 5000, image: 'porcion-papa-criolla.jpg', emoji: '🥔' },
+      { id: 122, name: 'Porción de Carne de Res', category: 'Porciones', description: 'Porción adicional de carne de res.', price: 8000, image: 'porcion-carne-res.jpg', emoji: '🥩' },
+      { id: 123, name: 'Porción de Churrasco', category: 'Porciones', description: 'Porción adicional de churrasco.', price: 16000, image: 'porcion-churrasco.jpg', emoji: '🥩' },
+      { id: 124, name: 'Porción de Pollo', category: 'Porciones', description: 'Porción adicional de pollo.', price: 8000, image: 'porcion-pollo.jpg', emoji: '🍗' },
+      { id: 125, name: 'Porción de Pechuga', category: 'Porciones', description: 'Porción adicional de pechuga.', price: 15000, image: 'porcion-pechuga.jpg', emoji: '🍗' },
+      { id: 126, name: 'Porción de Papa Salada', category: 'Porciones', description: 'Porción adicional de papa salada.', price: 4000, image: 'porcion-papa-salada.jpg', emoji: '🥔' },
+      { id: 127, name: 'Porción de Carne Koller', category: 'Porciones', description: 'Porción adicional de carne Koller.', price: 6000, image: 'porcion-carne-koller.jpg', emoji: '🥩' },
+      { id: 128, name: 'Porción de Gratinado', category: 'Porciones', description: 'Porción adicional de gratinado.', price: 3500, image: 'porcion-gratinado.jpg', emoji: '🧀' },
+      { id: 129, name: 'Porción de Patacón', category: 'Porciones', description: 'Porción adicional de patacón.', price: 800, image: 'porcion-patacon.jpg', emoji: '🍌' }
+    ];
+
+    let cart = loadCart();
+    let currentCategory = 'Todos';
+
+    const productsGrid = document.getElementById('productsGrid');
+    const categoriesWrap = document.getElementById('categories');
+    const cartPanel = document.getElementById('cartPanel');
+    const overlay = document.getElementById('overlay');
+    const cartItems = document.getElementById('cartItems');
+    const cartCount = document.getElementById('cartCount');
+    const cartTotal = document.getElementById('cartTotal');
+    const navLinks = document.getElementById('navLinks');
+
+    function loadCart() {
+      try {
+        const savedCart = localStorage.getItem('choripinchosCart');
+        return savedCart ? JSON.parse(savedCart) : [];
+      } catch (error) {
+        console.warn('No se pudo cargar el carrito guardado:', error);
+        return [];
+      }
+    }
+
+    function formatMoney(value) {
+      return Number(value).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+    }
+
+    function saveCart() {
+      localStorage.setItem('choripinchosCart', JSON.stringify(cart));
+    }
+
+    function renderCategories() {
+      const categories = ['Todos'].concat([...new Set(products.map(product => product.category))]);
+      categoriesWrap.innerHTML = categories.map(category => {
+        const activeClass = category === currentCategory ? 'active' : '';
+        return `<button class="cat-btn ${activeClass}" type="button" data-category="${category}">${category}</button>`;
+      }).join('');
+
+      document.querySelectorAll('.cat-btn').forEach(button => {
+        button.addEventListener('click', () => setCategory(button.dataset.category));
+      });
+    }
+
+    function setCategory(category) {
+      currentCategory = category;
+      renderCategories();
+      renderProducts();
+    }
+
+    function renderProducts() {
+      const filtered = currentCategory === 'Todos' ? products : products.filter(product => product.category === currentCategory);
+
+      productsGrid.innerHTML = filtered.map(product => `
+        <article class="product-card">
+          <div class="product-img">
+            <img src="${product.image}" alt="${product.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+            <div class="placeholder" style="display:none;">${product.emoji}</div>
+          </div>
+          <div class="product-body">
+            <h3>${product.name}</h3>
+            <p>${product.description}</p>
+            <div class="product-bottom">
+              <span class="price">${formatMoney(product.price)}</span>
+              <button class="btn btn-primary small-btn" type="button" onclick="addProductById(${product.id})">Agregar</button>
+            </div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function addProductById(id) {
+      const product = products.find(item => item.id === id);
+      if (!product) return;
+
+      const existing = cart.find(item => item.id === id);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ id: product.id, name: product.name, price: product.price, qty: 1 });
+      }
+
+      saveCart();
+      renderCart();
+      openCart();
+    }
+
+    function changeQty(id, action) {
+      const item = cart.find(product => product.id === id);
+      if (!item) return;
+
+      if (action === 'increase') item.qty += 1;
+      if (action === 'decrease') item.qty -= 1;
+
+      cart = cart.filter(product => product.qty > 0);
+      saveCart();
+      renderCart();
+    }
+
+    function removeItem(id) {
+      cart = cart.filter(product => product.id !== id);
+      saveCart();
+      renderCart();
+    }
+
+    function clearCart() {
+      cart = [];
+      saveCart();
+      renderCart();
+    }
+
+    function renderCart() {
+      const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+      const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+      cartCount.textContent = totalItems;
+      cartTotal.textContent = formatMoney(total);
+
+      if (!cart.length) {
+        cartItems.innerHTML = '<div class="cart-empty">Tu carrito está vacío. El hambre juzga, pero todavía estás a tiempo.</div>';
+        return;
+      }
+
+      cartItems.innerHTML = cart.map(item => `
+        <div class="cart-item">
+          <div class="cart-item-top">
+            <div>
+              <strong>${item.name}</strong><br />
+              <small>${formatMoney(item.price)} c/u</small>
+            </div>
+            <button class="remove-btn" type="button" onclick="removeItem(${item.id})">Quitar</button>
+          </div>
+          <div class="qty-controls">
+            <div class="qty-buttons">
+              <button type="button" onclick="changeQty(${item.id}, 'decrease')">−</button>
+              <strong>${item.qty}</strong>
+              <button type="button" onclick="changeQty(${item.id}, 'increase')">+</button>
+            </div>
+            <strong>${formatMoney(item.price * item.qty)}</strong>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openCart() {
+      cartPanel.classList.add('open');
+      overlay.classList.add('show');
+      document.body.classList.add('cart-open');
+    }
+
+    function closeCart() {
+      cartPanel.classList.remove('open');
+      overlay.classList.remove('show');
+      document.body.classList.remove('cart-open');
+    }
+
+    function sendWhatsAppOrder() {
+      if (!cart.length) {
+        alert('Agrega productos al carrito primero.');
+        return;
+      }
+
+      const name = document.getElementById('customerName').value.trim();
+      const address = document.getElementById('customerAddress').value.trim();
+      const payment = document.getElementById('paymentMethod').value;
+      const notes = document.getElementById('customerNotes').value.trim();
+      const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+      const orderLines = cart
+        .map(item => `• ${item.name} x${item.qty} - ${formatMoney(item.price * item.qty)}`)
+        .join('\n');
+
+      const message = [
+        'Hola Choripinchos G&M 🔥',
+        '',
+        'Quiero realizar este pedido:',
+        '',
+        orderLines,
+        '',
+        `Total: ${formatMoney(total)}`,
+        '',
+        `Nombre: ${name || 'Por confirmar'}`,
+        `Dirección / recogida: ${address || 'Por confirmar'}`,
+        `Método de pago: ${payment}`,
+        `Notas: ${notes || 'Sin notas'}`,
+        '',
+        'Quedo atento a la confirmación.'
+      ].join('\n');
+
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+    }
+
+    function runBasicTests() {
+      console.assert(formatMoney(12000).includes('12'), 'formatMoney debe formatear valores COP');
+      console.assert(products.length >= 1, 'Debe existir al menos un producto');
+      console.assert(products.every(product => product.id && product.name && product.price), 'Cada producto debe tener id, nombre y precio');
+      console.assert(document.getElementById('productsGrid'), 'Debe existir el contenedor de productos');
+      console.assert(document.getElementById('cartPanel'), 'Debe existir el panel del carrito');
+      console.assert(document.querySelector('#destacada img'), 'Debe existir la imagen destacada integrada');
+      console.assert(typeof sendWhatsAppOrder === 'function', 'Debe existir la función de envío por WhatsApp');
+      console.assert(WHATSAPP_NUMBER === '573223711034', 'El WhatsApp debe quedar actualizado a 322 3711034');
+      console.assert(document.querySelector('a[href*="didi-food.com"]'), 'Debe existir al menos un enlace a DiDi Food');
+      console.assert(document.querySelector('a[href*="maps.app.goo.gl/k72WxFPPo8wsQomw9"]'), 'Debe existir el enlace de ubicación en Google Maps');
+    }
+
+    document.getElementById('openCartTop').addEventListener('click', openCart);
+
+    document.getElementById('whatsappFloat').addEventListener('click', function(event) {
+      event.preventDefault();
+      if (cart.length) {
+        openCart();
+      } else {
+        const message = 'Hola Choripinchos G&M 🔥 quiero hacer un pedido.';
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+      }
+    });
+
+    document.getElementById('menuToggle').addEventListener('click', function() {
+      navLinks.classList.toggle('show');
+    });
+
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', () => navLinks.classList.remove('show'));
+    });
+
+    renderCategories();
+    renderProducts();
+    renderCart();
+    runBasicTests();
+  </script>
+</body>
+</html>
